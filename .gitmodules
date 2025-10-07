@@ -1,0 +1,6 @@
+[submodule "web-app/citadel-web-app"]
+	path = web-app/citadel-web-app
+	url = https://github.com/france-880/citadel-web-app.git
+[submodule "mobile-app/citadel-mobile-app"]
+	path = mobile-app/citadel-mobile-app
+	url = https://github.com/france-880/citadel-mobile-app.git
