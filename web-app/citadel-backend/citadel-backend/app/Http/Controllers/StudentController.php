@@ -8,30 +8,53 @@ use App\Models\Student;
 
 class StudentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::all()->map(function($s) {
-            return [
-                'id' => $s->id,
-                'fullname' => $s->fullname,
-                'studentNo' => $s->student_no,
-                'section' => $s->section,
-                'program' => $s->program,
-                'year' => $s->year,
-                'dob' => $s->dob,
-                'gender' => $s->gender,
-                'email' => $s->email,
-                'contact' => $s->contact,
-                'address' => $s->address,
-                'guardianName' => $s->guardian_name,
-                'guardianContact' => $s->guardian_contact,
-                'guardianAddress' => $s->guardian_address,
-                'username' => $s->username,
-            ];
-        });
-
+        $filters = $request->only(['search', 'program', 'year', 'section']);
+        $perPage = $request->input('per_page', 10);
+    
+        $query = Student::query();
+    
+        // 🔍 Dynamic filtering
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $search = $filters['search'];
+                $q->where('student_no', 'ILIKE', "%{$search}%")
+                  ->orWhere('fullname', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%");
+            });
+        }
+    
+        foreach (['program', 'year', 'section'] as $field) {
+            if (!empty($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
+        }
+    
+        $students = $query->latest()->paginate($perPage);
+    
+        $students->getCollection()->transform(fn($s) => [
+            'id' => $s->id,
+            'fullname' => $s->fullname,
+            'studentNo' => $s->student_no,
+            'section' => $s->section,
+            'program' => $s->program,
+            'year' => $s->year,
+            'dob' => $s->dob,
+            'gender' => $s->gender,
+            'email' => $s->email,
+            'contact' => $s->contact,
+            'address' => $s->address,
+            'guardianName' => $s->guardian_name,
+            'guardianContact' => $s->guardian_contact,
+            'guardianAddress' => $s->guardian_address,
+            'username' => $s->username,
+            'created_at' => $s->created_at,
+        ]);
+    
         return response()->json($students);
     }
+    
 
     public function store(Request $request)
     {
@@ -82,6 +105,8 @@ class StudentController extends Controller
     {
         return response()->json(Student::findOrFail($id));
     }
+
+
 
     public function update(Request $request, $id)
     {

@@ -5,10 +5,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\API\AuthController;
-// ✅ test route para lang macheck kung gumagana
-Route::get('/test-api', function () {
-    return response()->json(['message' => 'API works!']);
-});
+
 
 // ✅ student routes
 Route::get('/students', [StudentController::class, 'index']);

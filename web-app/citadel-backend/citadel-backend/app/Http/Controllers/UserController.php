@@ -8,22 +8,46 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all()->map(function($s) {
-            return [
-                'id' => $s->id,
-                'fullname' => $s->fullname,
-                'department' => $s->department,
-                'dob' => $s->dob,
-                'role' => $s->role,
-                'gender' => $s->gender,
-                'address' => $s->address,
-                'contact' => $s->contact,
-                'email' => $s->email,
-                'username' => $s->username,
-            ];
-        });
+        $filters = $request->only(['search', 'role']);
+        $perPage = $request->input('per_page', 10);
+
+        $query = User::query();
+
+        // 🔍 Dynamic search (fullname, email, id)
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $search = $filters['search'];
+                $q->where('fullname', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%")
+                  ->orWhere('id', 'ILIKE', "%{$search}%")
+                  ->orWhere('username', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        // 🧩 Role filter
+        if (!empty($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
+
+        // 🕓 Paginate + sort by latest
+        $users = $query->latest()->paginate($perPage);
+
+        // 🧾 Transform data for frontend
+        $users->getCollection()->transform(fn($u) => [
+            'id' => $u->id,
+            'fullname' => $u->fullname,
+            'department' => $u->department,
+            'dob' => $u->dob,
+            'role' => $u->role,
+            'gender' => $u->gender,
+            'address' => $u->address,
+            'contact' => $u->contact,
+            'email' => $u->email,
+            'username' => $u->username,
+            'created_at' => $u->created_at,
+        ]);
 
         return response()->json($users);
     }
