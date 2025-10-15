@@ -3,8 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
 
 // ✅ student routes
@@ -18,26 +23,25 @@ Route::delete('/students', [StudentController::class, 'bulkDestroy']);
 
 
 
-// ✅ user routes
-Route::get('/users', [UserController::class, 'index']);
-Route::post('/users', [UserController::class, 'store']);
-Route::get('/users/{id}', [UserController::class, 'show']);
-Route::put('/users/{id}', [UserController::class, 'update']);
-Route::delete('/users/delete-multiple', [UserController::class, 'deleteMultiple']);
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
-Route::delete('/users', [UserController::class, 'bulkDestroy']);
-
-
-
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'me']); // ✅ Add this line
+    // ✅ user routes - now protected by authentication
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{id}', [UserController::class, 'show']);
+    Route::put('/users/{id}', [UserController::class, 'updateUser']);
+    Route::delete('/users/delete-multiple', [UserController::class, 'deleteMultiple']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    Route::delete('/users', [UserController::class, 'bulkDestroy']);
+    Route::put('/users/{id}/change-password', [UserController::class, 'changePassword']);
+
+    // Auth routes
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me']);
-
-    Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-        return $request->user();
-    });
-
+    
+    // Profile routes
+    Route::get('/profile', [AuthController::class, 'me']); // Get current user profile
+    Route::put('/profile', [UserController::class, 'updateProfile']); // Update current user profile
 });
