@@ -34,21 +34,31 @@ class UserController extends Controller
         // 🕓 Paginate + sort by latest
         $users = $query->latest()->paginate($perPage);
 
-        // 🧾 Transform data for frontend
-        $users->getCollection()->transform(fn($u) => [
-            'id' => $u->id,
-            'fullname' => $u->fullname,
-            'department' => $u->department,
-            'dob' => $u->dob,
-            'role' => $u->role,
-            'gender' => $u->gender,
-            'address' => $u->address,
-            'contact' => $u->contact,
-            'email' => $u->email,
-            'username' => $u->username,
-            'created_at' => $u->created_at,
-        ]);
+       // 🧾 Transform data for frontend
+        $users->getCollection()->transform(function ($u) {
+            $roleNames = [
+                'program_head' => 'Program Head',
+                'dean' => 'Dean',
+                'prof' => 'Professor',
+                'guard' => 'Guard',
+                'super_admin' => 'Super Admin',
+            ];
 
+            return [
+                'id' => $u->id,
+                'fullname' => $u->fullname,
+                'department' => $u->department,
+                'dob' => $u->dob,
+                // ✅ Convert role slug to readable label
+                'role' => $roleNames[$u->role] ?? ucfirst(str_replace('_', ' ', $u->role)),
+                'gender' => $u->gender,
+                'address' => $u->address,
+                'contact' => $u->contact,
+                'email' => $u->email,
+                'username' => $u->username,
+                'created_at' => $u->created_at,
+            ];
+        });
         return response()->json($users);
     }
 
