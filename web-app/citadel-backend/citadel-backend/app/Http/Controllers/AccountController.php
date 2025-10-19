@@ -2,29 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-class UserController extends Controller
+class AccountController extends Controller
 {
     public function index(Request $request)
     {
-        // Check if user is authorized (dean, super_admin, or program_head)
+        // Check if user is authorized (super_admin, dean, or program_head)
         $currentUser = auth()->user();
-        if (!in_array($currentUser->role, ['dean', 'super_admin', 'program_head'])) {
+        if (!in_array($currentUser->role, ['super_admin', 'dean', 'program_head'])) {
             return response()->json([
-                'message' => 'Unauthorized. Only deans, super admins, and program heads can access professor management.'
+                'message' => 'Unauthorized. Only super admins, deans, and program heads can access account management.'
             ], 403);
         }
 
         $filters = $request->only(['search', 'role']);
         $perPage = $request->input('per_page', 10);
 
-        $query = User::query();
-
-        // 🎯 Dean's User Management - Professors Only
-        $query->where('role', 'prof');
+        $query = Account::query();
 
         // 🔍 Dynamic search (fullname, email, id)
         if (!empty($filters['search'])) {
@@ -37,18 +34,23 @@ class UserController extends Controller
             });
         }
 
-        // 🧩 Role filter (for professors, this is always 'prof')
+        // 🧩 Role filter
         if (!empty($filters['role'])) {
             $query->where('role', $filters['role']);
         }
 
         // 🕓 Paginate + sort by latest
-        $users = $query->latest()->paginate($perPage);
+        $accounts = $query->latest()->paginate($perPage);
 
-       // 🧾 Transform data for frontend - Dean's User Management (Professors Only)
-        $users->getCollection()->transform(function ($u) {
+       // 🧾 Transform data for frontend - Super Admin's Account Management (All User Types)
+        $accounts->getCollection()->transform(function ($u) {
             $roleNames = [
+                'program_head' => 'Program Head',
+                'dean' => 'Dean',
                 'prof' => 'Professor',
+                'guard' => 'Guard',
+                'super_admin' => 'Super Admin',
+                'secretary' => 'Secretary',
             ];
 
             return [
@@ -66,11 +68,19 @@ class UserController extends Controller
                 'created_at' => $u->created_at,
             ];
         });
-        return response()->json($users);
+        return response()->json($accounts);
     }
 
     public function store(Request $request)
     {
+        // Check if user is authorized (super_admin only)
+        $currentUser = auth()->user();
+        if ($currentUser->role !== 'super_admin') {
+            return response()->json([
+                'message' => 'Unauthorized. Only super admins can create accounts.'
+            ], 403);
+        }
+
         // Validate incoming camelCase data from React
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
@@ -80,14 +90,19 @@ class UserController extends Controller
             'gender' => 'required|string',
             'address' => 'required|string',
             'contact' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'username' => 'required|string|unique:users,username',
+            'email' => 'required|email|unique:accounts,email',
+            'username' => 'required|string|unique:accounts,username',
             'password' => 'required|string|min:6',
         ]);
 
         // Map role values from frontend to database values
         $roleMapping = [
+            'Program Head' => 'program_head',
+            'Dean' => 'dean', 
             'Professor' => 'prof',
+            'Guard' => 'guard',
+            'Super Admin' => 'super_admin',
+            'Secretary' => 'secretary'
         ];
 
         // Map camelCase → snake_case
@@ -104,14 +119,14 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
         ];
 
-        $user = User::create($payload);
+        $account = Account::create($payload);
 
-        return response()->json($user, 201);
+        return response()->json($account, 201);
     }
 
     public function show($id)
     {
-        return response()->json(User::findOrFail($id));
+        return response()->json(Account::findOrFail($id));
     }
 
     /**
@@ -129,8 +144,8 @@ class UserController extends Controller
             'gender' => 'required|string',
             'address' => 'required|string',
             'contact' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'username' => 'required|string|unique:users,username,' . $user->id,
+            'email' => 'required|email|unique:accounts,email,' . $user->id,
+            'username' => 'required|string|unique:accounts,username,' . $user->id,
         ]);
 
         // Users cannot update their own role - only admins can do that
@@ -172,15 +187,15 @@ class UserController extends Controller
                 'auth_user' => auth()->user() ? auth()->user()->id : 'not_authenticated'
             ]);
 
-            // Check if user is admin (dean, super_admin, or program_head)
+            // Check if user is super_admin
             $currentUser = auth()->user();
-            if (!in_array($currentUser->role, ['dean', 'super_admin', 'program_head'])) {
+            if ($currentUser->role !== 'super_admin') {
                 return response()->json([
-                    'message' => 'Unauthorized. Only administrators can edit users.'
+                    'message' => 'Unauthorized. Only super admins can edit accounts.'
                 ], 403);
             }
 
-            $user = User::findOrFail($id);
+            $user = Account::findOrFail($id);
 
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
@@ -190,14 +205,19 @@ class UserController extends Controller
             'gender' => 'required|string',
             'address' => 'required|string',
             'contact' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'username' => 'required|string|unique:users,username,' . $id,
+            'email' => 'required|email|unique:accounts,email,' . $id,
+            'username' => 'required|string|unique:accounts,username,' . $id,
             'password' => 'sometimes|string|min:6', // Only validate password if provided
         ]);
 
         // Map role values from frontend to database values
         $roleMapping = [
+            'Program Head' => 'program_head',
+            'Dean' => 'dean', 
             'Professor' => 'prof',
+            'Guard' => 'guard',
+            'Super Admin' => 'super_admin',
+            'Secretary' => 'secretary'
         ];
 
         // Map camelCase → snake_case
@@ -240,27 +260,27 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        // Check if user is admin (dean, super_admin, or program_head)
+        // Check if user is super_admin
         $currentUser = auth()->user();
-        if (!in_array($currentUser->role, ['dean', 'super_admin', 'program_head'])) {
+        if ($currentUser->role !== 'super_admin') {
             return response()->json([
-                'message' => 'Unauthorized. Only administrators can delete users.'
+                'message' => 'Unauthorized. Only super admins can delete accounts.'
             ], 403);
         }
 
-        $user = User::findOrFail($id);
-        $user->delete();
+        $account = Account::findOrFail($id);
+        $account->delete();
 
-        return response()->json(['message' => 'User deleted successfully']);
+        return response()->json(['message' => 'Account deleted successfully']);
     }
 
     public function deleteMultiple(Request $request)
     {
-        // Check if user is admin (dean, super_admin, or program_head)
+        // Check if user is super_admin
         $currentUser = auth()->user();
-        if (!in_array($currentUser->role, ['dean', 'super_admin', 'program_head'])) {
+        if ($currentUser->role !== 'super_admin') {
             return response()->json([
-                'message' => 'Unauthorized. Only administrators can delete users.'
+                'message' => 'Unauthorized. Only super admins can delete accounts.'
             ], 403);
         }
 
@@ -270,14 +290,14 @@ class UserController extends Controller
             return response()->json(['message' => 'No user IDs provided'], 400);
         }
 
-        User::whereIn('id', $ids)->delete();
+        Account::whereIn('id', $ids)->delete();
 
-        return response()->json(['message' => 'Users deleted successfully']);
+        return response()->json(['message' => 'Accounts deleted successfully']);
     }
 
     public function changePassword(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        $user = Account::findOrFail($id);
     
         $request->validate([
             'current_password' => 'required|string',

@@ -15,6 +15,10 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        // No seeders needed - using existing PostgreSQL users from user management
+        // Seed Users (Professors) and Accounts (All User Types)
+        $this->call([
+            SuperAdminSeeder::class,
+            AccountSeeder::class,
+        ]);
     }
 }
