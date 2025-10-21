@@ -25,6 +25,8 @@ Route::put('/students/{id}', [StudentController::class, 'update']);
 Route::delete('/students/delete-multiple', [StudentController::class, 'deleteMultiple']);
 Route::delete('/students/{id}', [StudentController::class, 'destroy']);
 Route::delete('/students', [StudentController::class, 'bulkDestroy']);
+Route::get('/students/by-section', [StudentController::class, 'getStudentsBySection']);
+Route::get('/students/sections/all', [StudentController::class, 'getAllSections']);
 
 
 
@@ -62,6 +64,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/faculty-loads', [FacultyLoadController::class, 'index']);
     Route::post('/faculty-loads', [FacultyLoadController::class, 'store']);
     Route::get('/faculty-loads/{facultyId}', [FacultyLoadController::class, 'getFacultyLoads']);
+    Route::get('/faculty-loads/{facultyId}/sections', [FacultyLoadController::class, 'getFacultySections']);
+    Route::get('/faculty-loads/sections/all', [FacultyLoadController::class, 'getAllSections']);
     Route::put('/faculty-loads/{id}', [FacultyLoadController::class, 'update']);
     Route::delete('/faculty-loads/{id}', [FacultyLoadController::class, 'destroy']);
 
