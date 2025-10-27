@@ -16,7 +16,7 @@ class SuperAdminSeeder extends Seeder
         // Create default super admin account
         Account::create([
             'fullname' => 'Super Administrator',
-            'department' => 'IT Department',
+            'college_id' => null,
             'dob' => '1990-01-01',
             'role' => 'super_admin',
             'gender' => 'Male',
@@ -24,7 +24,7 @@ class SuperAdminSeeder extends Seeder
             'contact' => '09123456789',
             'email' => 'superadmin@citadel.edu',
             'username' => 'superadmin',
-            'password' => Hash::make('admin123'),
+            'password' => Hash::make('superadmin@citadel.edu'),
         ]);
 
         $this->command->info('Super Admin account created successfully!');

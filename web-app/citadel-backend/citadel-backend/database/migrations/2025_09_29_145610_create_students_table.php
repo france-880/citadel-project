@@ -6,18 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->string('fullname');
             $table->string('student_no')->unique();
-            $table->string('section');
-            $table->string('program');
-            $table->string('year');
+            $table->unsignedBigInteger('program_id')->nullable();
+            $table->unsignedBigInteger('year_section_id')->nullable();
             $table->date('dob');
             $table->string('gender');
             $table->string('email')->unique();
@@ -29,13 +25,9 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('password'); // hashed
             $table->timestamps();
-
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('students');

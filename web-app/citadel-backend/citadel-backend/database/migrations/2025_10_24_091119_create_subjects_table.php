@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('subjects', function (Blueprint $table) {
             $table->id();
-            $table->string('subject_name')->nullable();
-            $table->string('subject_code')->nullable();
-            $table->enum('subject_type', ['Major', 'Minor', 'General Education', 'Elective'])->nullable();
+            $table->string('subject_name');
+            $table->string('subject_code')->unique();
+            $table->enum('subject_type', ['Major', 'Minor', 'General Education', 'Elective']);
             $table->timestamps();
         });
     }
