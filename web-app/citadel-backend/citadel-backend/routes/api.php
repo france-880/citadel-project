@@ -12,10 +12,21 @@ use App\Http\Controllers\AcademicManagement\CollegeController;
 use App\Http\Controllers\AcademicManagement\ProgramController;
 use App\Http\Controllers\AcademicManagement\SubjectController;
 use App\Http\Controllers\FacultyLoadController;
+use App\Http\Controllers\YearSectionController;
 
+/* ===============================================
+   =========== Login Credentials Routes ==========
+   =============================================== */
+   
+// Login Route
+Route::post('/login', [AuthController::class, 'login']);
+
+// Password Reset Routes
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
+// YearSection Routes - READ-ONLY
+Route::get('/year-sections', [YearSectionController::class, 'index']);
 
 // ✅ student routes
 Route::get('/students', [StudentController::class, 'index']);
@@ -28,12 +39,12 @@ Route::delete('/students', [StudentController::class, 'bulkDestroy']);
 Route::get('/students/by-section', [StudentController::class, 'getStudentsBySection']);
 Route::get('/students/sections/all', [StudentController::class, 'getAllSections']);
 
-
-
-Route::post('/login', [AuthController::class, 'login']);
+/* ================================================================
+   =========== Protected routes - require authentication ==========
+   ================================================================ */
 
 Route::middleware('auth:sanctum')->group(function () {
-    // ✅ Dean's User Management - Professors Only
+    // Dean's User Management - Professors Only
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::get('/users/{id}', [UserController::class, 'show']);
@@ -42,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
     Route::put('/users/{id}/change-password', [UserController::class, 'changePassword']);
 
-    // ✅ Super Admin's Account Management - All User Types
+    // Super Admin's Account Management - All User Types
     Route::get('/accounts', [AccountController::class, 'index']);
     Route::post('/accounts', [AccountController::class, 'store']);
     Route::get('/accounts/{id}', [AccountController::class, 'show']);
@@ -69,25 +80,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/faculty-loads/{id}', [FacultyLoadController::class, 'update']);
     Route::delete('/faculty-loads/{id}', [FacultyLoadController::class, 'destroy']);
 
-    // ✅ Academic Management routes
-    // College routes
-    Route::get('/colleges', [CollegeController::class, 'index']);
-    Route::post('/colleges', [CollegeController::class, 'store']);
-    Route::get('/colleges/{id}', [CollegeController::class, 'show']);
-    Route::put('/colleges/{id}', [CollegeController::class, 'update']);
-    Route::delete('/colleges/{id}', [CollegeController::class, 'destroy']);
-      
-    // Program routes
-    Route::get('/programs', [ProgramController::class, 'index']);
-    Route::post('/programs', [ProgramController::class, 'store']);
-    Route::get('/programs/{id}', [ProgramController::class, 'show']);
-    Route::put('/programs/{id}', [ProgramController::class, 'update']);
-    Route::delete('/programs/{id}', [ProgramController::class, 'destroy']);
-
-    // Subject routes
-    Route::get('/subjects', [SubjectController::class, 'index']);
-    Route::post('/subjects', [SubjectController::class, 'store']);
-    Route::get('/subjects/{id}', [SubjectController::class, 'show']);
-    Route::put('/subjects/{id}', [SubjectController::class, 'update']);
-    Route::delete('/subjects/{id}', [SubjectController::class, 'destroy']);
+    // Academic Management routes
+     // College routes - WALANG MIDDLEWARE SA CONTROLLER
+    Route::apiResource('colleges', CollegeController::class);
+    Route::get('colleges/deans/available', [CollegeController::class, 'getAvailableDeans']);
+    
+    // Program routes - WALANG MIDDLEWARE SA CONTROLLER  
+    Route::apiResource('programs', ProgramController::class);
+    Route::get('programs/college/{collegeId}', [ProgramController::class, 'getByCollege']);
+    Route::get('programs/program-heads/available', [ProgramController::class, 'getAvailableProgramHeads']);
+    
+    // Subject routes - WALANG MIDDLEWARE SA CONTROLLER
+    Route::apiResource('subjects', SubjectController::class);
+    Route::get('subjects/type/{type}', [SubjectController::class, 'getByType']);
 });

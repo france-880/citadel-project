@@ -11,7 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('colleges', function (Blueprint $table) {
+            $table->id();
+            $table->string('college_name');
+            $table->string('college_code')->unique();
+            $table->timestamps();
+            $table->unsignedBigInteger('dean_id')->nullable(); 
+        });
     }
 
     /**
@@ -19,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('colleges');
     }
 };

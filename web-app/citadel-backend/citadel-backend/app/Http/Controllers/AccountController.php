@@ -10,11 +10,11 @@ class AccountController extends Controller
 {
     public function index(Request $request)
     {
-        // Check if user is authorized (super_admin, dean, or program_head)
+        // Check if user is authorized (super_admin, dean, or college_secretary)
         $currentUser = auth()->user();
-        if (!in_array($currentUser->role, ['super_admin', 'dean', 'program_head'])) {
+        if (!in_array($currentUser->role, ['super_admin', 'dean', 'college_secretary'])) {
             return response()->json([
-                'message' => 'Unauthorized. Only super admins, deans, and program heads can access account management.'
+                'message' => 'Unauthorized. Only super admins, deans, secretaries, and program heads can access account management.'
             ], 403);
         }
 
@@ -45,18 +45,15 @@ class AccountController extends Controller
        // 🧾 Transform data for frontend - Super Admin's Account Management (All User Types)
         $accounts->getCollection()->transform(function ($u) {
             $roleNames = [
-                'program_head' => 'Program Head',
-                'dean' => 'Dean',
-                'prof' => 'Professor',
-                'guard' => 'Guard',
                 'super_admin' => 'Super Admin',
-                'secretary' => 'Secretary',
+                'dean' => 'Dean',
+                'college_secretary' => 'College Secretary',
             ];
 
             return [
                 'id' => $u->id,
                 'fullname' => $u->fullname,
-                'department' => $u->department,
+                'college_id' => $u->college_id,
                 'dob' => $u->dob,
                 // ✅ Convert role slug to readable label
                 'role' => $roleNames[$u->role] ?? ucfirst(str_replace('_', ' ', $u->role)),
@@ -84,7 +81,7 @@ class AccountController extends Controller
         // Validate incoming camelCase data from React
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
-            'department' => 'required|string',
+            'college_id' => 'required|string',
             'dob' => 'required|date',
             'role' => 'required|string',
             'gender' => 'required|string',
@@ -97,18 +94,15 @@ class AccountController extends Controller
 
         // Map role values from frontend to database values
         $roleMapping = [
-            'Program Head' => 'program_head',
-            'Dean' => 'dean', 
-            'Professor' => 'prof',
-            'Guard' => 'guard',
             'Super Admin' => 'super_admin',
-            'Secretary' => 'secretary'
+            'Dean' => 'dean',  
+            'College Secretary' => 'college_secretary'
         ];
 
         // Map camelCase → snake_case
         $payload = [
             'fullname' => $validated['fullname'],
-            'department' => $validated['department'],
+            'college_id' => $validated['college_id'],
             'dob' => $validated['dob'],
             'role' => $roleMapping[$validated['role']] ?? strtolower(str_replace(' ', '_', $validated['role'])),
             'gender' => $validated['gender'],
@@ -139,7 +133,7 @@ class AccountController extends Controller
         
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
-            'department' => 'required|string',
+            'college_id' => 'required|string',
             'dob' => 'required|date',
             'gender' => 'required|string',
             'address' => 'required|string',
@@ -151,7 +145,7 @@ class AccountController extends Controller
         // Users cannot update their own role - only admins can do that
         $payload = [
             'fullname' => $validated['fullname'],
-            'department' => $validated['department'],
+            'college_id' => $validated['college_id'],
             'dob' => $validated['dob'],
             'gender' => $validated['gender'],
             'address' => $validated['address'],
@@ -199,7 +193,7 @@ class AccountController extends Controller
 
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
-            'department' => 'required|string',
+            'college_id' => 'required|string',
             'dob' => 'required|date',
             'role' => 'required|string',
             'gender' => 'required|string',
@@ -212,18 +206,17 @@ class AccountController extends Controller
 
         // Map role values from frontend to database values
         $roleMapping = [
-            'Program Head' => 'program_head',
-            'Dean' => 'dean', 
-            'Professor' => 'prof',
-            'Guard' => 'guard',
             'Super Admin' => 'super_admin',
-            'Secretary' => 'secretary'
+            'Dean' => 'dean',
+            'Secretary' => 'secretary',
+            'Program Head' => 'program_head',
+            'Professor' => 'prof'
         ];
 
         // Map camelCase → snake_case
         $payload = [
             'fullname' => $validated['fullname'],
-            'department' => $validated['department'],
+            'college_id' => $validated['college_id'],
             'dob' => $validated['dob'],
             'role' => $roleMapping[$validated['role']] ?? strtolower(str_replace(' ', '_', $validated['role'])),
             'gender' => $validated['gender'],

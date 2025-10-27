@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('faculty_loads', function (Blueprint $table) {
+        Schema::create('programs', function (Blueprint $table) {
             $table->id();
+            $table->string('program_name');
+            $table->string('program_code')->unique();
+            $table->unsignedBigInteger('college_id')->nullable(); 
+            $table->unsignedBigInteger('program_head_id')->nullable();
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('faculty_loads');
+        Schema::dropIfExists('programs');
     }
 };

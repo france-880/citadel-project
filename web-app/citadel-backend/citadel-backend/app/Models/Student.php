@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\AcademicManagement\Program; 
+use App\Models\YearSection;
 
 class Student extends Authenticatable
 {
@@ -14,9 +16,6 @@ class Student extends Authenticatable
     protected $fillable = [
         'fullname',
         'student_no',
-        'section',
-        'program',
-        'year',
         'dob',
         'gender',
         'email',
@@ -27,6 +26,9 @@ class Student extends Authenticatable
         'guardian_address',
         'username',
         'password',
+
+        'program_id',
+        'year_section_id',
     ];
 
     protected $hidden = [
@@ -35,6 +37,18 @@ class Student extends Authenticatable
     ];
 
     public $timestamps = true; // this is default, but just to be sure
+
+    // Relationship sa Program
+    public function program()
+    {
+        return $this->belongsTo(Program::class, 'program_id'); 
+    }
+
+    // Relationship sa YearSection
+    public function yearSection()
+    {
+        return $this->belongsTo(YearSection::class, 'year_section_id');
+    }
 }
 
 

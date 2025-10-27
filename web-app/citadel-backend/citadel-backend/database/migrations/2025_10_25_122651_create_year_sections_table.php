@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('colleges', function (Blueprint $table) {
+        Schema::create('year_sections', function (Blueprint $table) {
             $table->id();
-            $table->string('college_name')->nullable();
-            $table->string('college_code')->nullable();
-            $table->foreignId('college_dean_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('college_status', ['Active', 'Inactive'])->default('Active');
+            $table->string('year_level');
+            $table->string('section');
             $table->timestamps();
+
+            $table->unique(['year_level', 'section']);
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('colleges');
+        Schema::dropIfExists('year_sections');
     }
 };
