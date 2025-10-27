@@ -291,4 +291,54 @@ class StudentController extends Controller
             ], 500);
         }
     }
+
+    // Get students by section
+    public function getStudentsBySection(Request $request)
+    {
+        $section = $request->get('section');
+        $program = $request->get('program');
+        $year = $request->get('year');
+
+        $query = Student::query();
+
+        if ($section) {
+            $query->where('section', $section);
+        }
+
+        if ($program) {
+            $query->where('program', $program);
+        }
+
+        if ($year) {
+            $query->where('year', $year);
+        }
+
+        $students = $query->orderBy('fullname')->get();
+
+        $students->transform(fn($s) => [
+            'id' => $s->id,
+            'fullname' => $s->fullname,
+            'studentNo' => $s->student_no,
+            'section' => $s->section,
+            'program' => $s->program,
+            'year' => $s->year,
+            'email' => $s->email,
+            'contact' => $s->contact,
+        ]);
+
+        return response()->json($students);
+    }
+
+    // Get all unique sections
+    public function getAllSections(Request $request)
+    {
+        $sections = Student::distinct()
+            ->whereNotNull('section')
+            ->where('section', '!=', '')
+            ->pluck('section')
+            ->sort()
+            ->values();
+
+        return response()->json($sections);
+    }
 }

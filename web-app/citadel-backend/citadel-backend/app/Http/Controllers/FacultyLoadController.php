@@ -140,4 +140,41 @@ class FacultyLoadController extends Controller
 
         return response()->json($facultyLoads);
     }
+
+    // Get all unique sections for a specific faculty
+    public function getFacultySections($facultyId, Request $request)
+    {
+        $academicYear = $request->get('academic_year', '2024');
+        $semester = $request->get('semester', 'First');
+
+        $sections = FacultyLoad::where('faculty_id', $facultyId)
+            ->where('academic_year', $academicYear)
+            ->where('semester', $semester)
+            ->whereNotNull('section')
+            ->where('section', '!=', '')
+            ->distinct()
+            ->pluck('section')
+            ->sort()
+            ->values();
+
+        return response()->json($sections);
+    }
+
+    // Get all unique sections across all faculty loads
+    public function getAllSections(Request $request)
+    {
+        $academicYear = $request->get('academic_year', '2024');
+        $semester = $request->get('semester', 'First');
+
+        $sections = FacultyLoad::where('academic_year', $academicYear)
+            ->where('semester', $semester)
+            ->whereNotNull('section')
+            ->where('section', '!=', '')
+            ->distinct()
+            ->pluck('section')
+            ->sort()
+            ->values();
+
+        return response()->json($sections);
+    }
 }
