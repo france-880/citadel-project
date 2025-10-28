@@ -16,7 +16,27 @@ class CollegeController extends Controller
      */
     public function index()
     {
-        $colleges = College::with('dean')->get();
+        $colleges = College::with(['dean', 'programs.students'])->get();
+        
+        // Add student count for each college
+        $colleges->transform(function($college) {
+            $studentCount = 0;
+            foreach ($college->programs as $program) {
+                $studentCount += $program->students->count();
+            }
+            
+            return [
+                'id' => $college->id,
+                'college_name' => $college->college_name,
+                'college_code' => $college->college_code,
+                'dean_id' => $college->dean_id,
+                'dean' => $college->dean,
+                'students_count' => $studentCount,
+                'created_at' => $college->created_at,
+                'updated_at' => $college->updated_at,
+            ];
+        });
+        
         return response()->json([
             'success' => true,
             'data' => $colleges

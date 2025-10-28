@@ -51,4 +51,3 @@ class Student extends Authenticatable
     }
 }
 
-

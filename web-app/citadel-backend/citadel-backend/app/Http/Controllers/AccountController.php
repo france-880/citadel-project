@@ -21,7 +21,7 @@ class AccountController extends Controller
         $filters = $request->only(['search', 'role']);
         $perPage = $request->input('per_page', 10);
 
-        $query = Account::query();
+        $query = Account::query()->with('college'); // ✅ Load college relationship
 
         // 🔍 Dynamic search (fullname, email, id)
         if (!empty($filters['search'])) {
@@ -54,6 +54,11 @@ class AccountController extends Controller
                 'id' => $u->id,
                 'fullname' => $u->fullname,
                 'college_id' => $u->college_id,
+                'college' => $u->college ? [
+                    'id' => $u->college->id,
+                    'college_name' => $u->college->college_name,
+                    'college_code' => $u->college->college_code,
+                ] : null,
                 'dob' => $u->dob,
                 // ✅ Convert role slug to readable label
                 'role' => $roleNames[$u->role] ?? ucfirst(str_replace('_', ' ', $u->role)),

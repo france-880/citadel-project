@@ -4,6 +4,7 @@ namespace App\Models\AcademicManagement;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Account;
 
 class College extends Model
@@ -28,5 +29,13 @@ class College extends Model
     public function accounts()
     {
         return $this->hasMany(Account::class);
+    }
+    
+    /**
+     * Get all programs belonging to this college
+     */
+    public function programs(): HasMany
+    {
+        return $this->hasMany(Program::class);
     }
 }

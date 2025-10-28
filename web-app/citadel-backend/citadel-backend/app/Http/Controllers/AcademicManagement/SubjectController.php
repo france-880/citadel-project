@@ -29,7 +29,9 @@ class SubjectController extends Controller
         $request->validate([
             'subject_name' => 'required|string|max:255',
             'subject_code' => 'required|string|unique:subjects,subject_code|max:20',
-            'subject_type' => 'required|in:Major,Minor,General Education,Elective'
+            'units' => 'nullable|integer|min:1|max:10',
+            'semester' => 'nullable|string|max:50',
+            'year_level' => 'nullable|string|max:50'
         ]);
 
         $subject = Subject::create($request->all());
@@ -78,7 +80,9 @@ class SubjectController extends Controller
         $request->validate([
             'subject_name' => 'sometimes|required|string|max:255',
             'subject_code' => 'sometimes|required|string|unique:subjects,subject_code,' . $id . '|max:20',
-            'subject_type' => 'sometimes|required|in:Major,Minor,General Education,Elective'
+            'units' => 'nullable|integer|min:1|max:10',
+            'semester' => 'nullable|string|max:50',
+            'year_level' => 'nullable|string|max:50'
         ]);
 
         $subject->update($request->all());
@@ -114,20 +118,24 @@ class SubjectController extends Controller
     }
 
     /**
-     * Get subjects by type
+     * Get subjects by year level
      */
-    public function getByType($type)
+    public function getByYearLevel($yearLevel)
     {
-        $validTypes = ['Major', 'Minor', 'General Education', 'Elective'];
-        
-        if (!in_array($type, $validTypes)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid subject type'
-            ], 422);
-        }
+        $subjects = Subject::where('year_level', $yearLevel)->get();
 
-        $subjects = Subject::where('subject_type', $type)->get();
+        return response()->json([
+            'success' => true,
+            'data' => $subjects
+        ]);
+    }
+
+    /**
+     * Get subjects by semester
+     */
+    public function getBySemester($semester)
+    {
+        $subjects = Subject::where('semester', $semester)->get();
 
         return response()->json([
             'success' => true,
