@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('student_no')->unique();
             $table->unsignedBigInteger('program_id')->nullable();
             $table->unsignedBigInteger('year_section_id')->nullable();
+            $table->string('status')->default('Regular');
             $table->date('dob');
             $table->string('gender');
             $table->string('email')->unique();

@@ -49,6 +49,7 @@ class AuthController extends Controller
                 'address' => $user->address ?? null,
                 'gender' => $user->gender ?? null,
                 'dob' => $user->dob ?? null,
+                'has_facial_recognition' => $user->has_facial_recognition ?? false, // for students
             ],
         ]);
     }
@@ -119,5 +120,98 @@ class AuthController extends Controller
         $user->update(['password' => Hash::make($validated['password'])]);
 
         return response()->json(['message' => 'Password updated successfully.']);
+    }
+
+    /**
+     * 👤 GET CURRENT USER PROFILE
+     */
+    public function me(Request $req)
+    {
+        $user = $req->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // Determine origin based on the model type
+        $origin = 'users'; // default
+        if ($user instanceof \App\Models\Student) {
+            $origin = 'students';
+        } elseif ($user instanceof \App\Models\Account) {
+            $origin = 'accounts';
+        }
+
+        // Return user data with all available fields
+        return response()->json([
+            'id' => $user->id,
+            'fullname' => $user->fullname ?? null,
+            'email' => $user->email ?? null,
+            'username' => $user->username ?? null,
+            'role' => $user->role ?? 'student',
+            'origin' => $origin,
+            'department' => $user->department ?? null,
+            'college_id' => $user->college_id ?? null,
+            'program' => $user->program ?? null,
+            'contact' => $user->contact ?? null,
+            'address' => $user->address ?? null,
+            'gender' => $user->gender ?? null,
+            'dob' => $user->dob ?? null,
+            'has_facial_recognition' => $user->has_facial_recognition ?? false,
+        ]);
+    }
+
+    /**
+     * ✏️ UPDATE CURRENT USER PROFILE
+     */
+    public function updateProfile(Request $req)
+    {
+        $user = $req->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // Validate incoming data - allow nullable values
+        $validated = $req->validate([
+            'fullname' => 'sometimes|nullable|string|max:255',
+            'email' => 'sometimes|nullable|email|max:255',
+            'contact' => 'sometimes|nullable|string|max:20',
+            'address' => 'sometimes|nullable|string|max:500',
+            'department' => 'sometimes|nullable|string|max:255',
+            'dob' => 'sometimes|nullable|date',
+            'gender' => 'sometimes|nullable|in:Male,Female',
+            'username' => 'sometimes|nullable|string|max:255',
+        ]);
+
+        // Filter out empty strings and convert to null
+        $updateData = [];
+        foreach ($validated as $key => $value) {
+            if ($value !== '' && $value !== null) {
+                $updateData[$key] = $value;
+            } elseif ($value === '') {
+                $updateData[$key] = null;
+            }
+        }
+
+        // Update only the fields that were provided
+        $user->update($updateData);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => [
+                'id' => $user->id,
+                'fullname' => $user->fullname ?? null,
+                'email' => $user->email ?? null,
+                'username' => $user->username ?? null,
+                'role' => $user->role ?? null,
+                'department' => $user->department ?? null,
+                'college_id' => $user->college_id ?? null,
+                'program' => $user->program ?? null,
+                'contact' => $user->contact ?? null,
+                'address' => $user->address ?? null,
+                'gender' => $user->gender ?? null,
+                'dob' => $user->dob ?? null,
+            ]
+        ]);
     }
 }

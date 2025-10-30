@@ -15,9 +15,11 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('program_id');
             $table->string('academic_year');
-            $table->unsignedBigInteger('subject_id');
+            $table->string('semester');
             $table->string('year_level');
-            $table->unsignedBigInteger('schedule_id')->nullable();
+            $table->string('parent_section');
+            $table->unsignedBigInteger('subject_id');
+            $table->integer('slots')->nullable();
             $table->timestamps();
 
             $table->foreign('program_id')->references('id')->on('programs')->onDelete('cascade');

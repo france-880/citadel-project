@@ -4,6 +4,7 @@ namespace App\Models\AcademicManagement;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\Account;
 use App\Models\AcademicManagement\College;
 use App\Models\Student;
@@ -35,5 +36,13 @@ class Program extends Model
 
     public function students() {
         return $this->hasMany(Student::class);
+    }
+
+    /**
+     * Get all subjects assigned to this program (many-to-many)
+     */
+    public function subjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'program_subject');
     }
 }

@@ -60,6 +60,7 @@ class StudentController extends Controller
                 'program' => $student->program->program_name ?? '', // From relationship
                 'year' => $student->yearSection->year_level ?? '', // From relationship
                 'section' => $student->yearSection->section ?? '', // From relationship
+                'status' => $student->status ?? '',
                 'dob' => $student->dob,
                 'gender' => $student->gender,
                 'email' => $student->email,
@@ -84,6 +85,7 @@ class StudentController extends Controller
             'student_no' => 'required|string|unique:students,student_no', // snake_case
             'program_id' => 'required|exists:programs,id',
             'year_section_id' => 'required|exists:year_sections,id',
+            'status' => 'required|string|in:Regular,Irregular',
             'dob' => 'required|date',
             'gender' => 'required|string|in:Male,Female',
             'email' => 'required|email|unique:students,email',
@@ -102,6 +104,7 @@ class StudentController extends Controller
             'student_no' => $validated['student_no'],
             'program_id' => $validated['program_id'],
             'year_section_id' => $validated['year_section_id'],
+            'status' => $validated['status'],
             'dob' => $validated['dob'],
             'gender' => $validated['gender'],
             'email' => $validated['email'],
@@ -181,6 +184,7 @@ class StudentController extends Controller
             'student_no' => 'sometimes|string|unique:students,student_no,' . $id,
             'program_id' => 'required|exists:programs,id',
             'year_section_id' => 'required|exists:year_sections,id',
+            'status' => 'required|string|in:Regular,Irregular',
             'dob' => 'required|date',
             'gender' => 'required|string|in:Male,Female',
             'email' => 'required|email|unique:students,email,' . $id,
@@ -202,6 +206,7 @@ class StudentController extends Controller
             'student_no' => $validated['studentNo'] ?? $validated['student_no'] ?? $student->student_no,
             'program_id' => $validated['program_id'],
             'year_section_id' => $validated['year_section_id'],
+            'status' => $validated['status'],
             'dob' => $validated['dob'],
             'gender' => $validated['gender'],
             'email' => $validated['email'],
@@ -340,5 +345,35 @@ class StudentController extends Controller
             ->values();
 
         return response()->json($sections);
+    }
+
+    // Register facial recognition for a student
+    public function registerFacialRecognition(Request $request, $id)
+    {
+        $student = Student::find($id);
+        
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        // Update facial recognition status
+        $student->has_facial_recognition = true;
+        
+        // Optionally store facial recognition data if provided
+        if ($request->has('facial_data')) {
+            $student->facial_recognition_data = $request->facial_data;
+        }
+        
+        $student->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Facial recognition registered successfully',
+            'student' => [
+                'id' => $student->id,
+                'fullname' => $student->fullname,
+                'has_facial_recognition' => $student->has_facial_recognition,
+            ]
+        ]);
     }
 }

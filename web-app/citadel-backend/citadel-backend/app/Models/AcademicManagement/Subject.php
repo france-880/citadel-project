@@ -3,6 +3,7 @@
 namespace App\Models\AcademicManagement;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Subject extends Model
 {
@@ -10,7 +11,13 @@ class Subject extends Model
         'subject_name', 
         'subject_code', 
         'units',
-        'semester',
-        'year_level',
     ];
+
+    /**
+     * Get all programs that offer this subject (many-to-many)
+     */
+    public function programs(): BelongsToMany
+    {
+        return $this->belongsToMany(Program::class, 'program_subject');
+    }
 }

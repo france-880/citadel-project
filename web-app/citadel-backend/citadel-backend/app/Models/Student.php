@@ -29,11 +29,18 @@ class Student extends Authenticatable
 
         'program_id',
         'year_section_id',
+        'has_facial_recognition',
+        'facial_recognition_data',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'facial_recognition_data', // Hide sensitive facial data
+    ];
+
+    protected $casts = [
+        'has_facial_recognition' => 'boolean',
     ];
 
     public $timestamps = true; // this is default, but just to be sure

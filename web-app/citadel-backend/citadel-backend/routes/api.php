@@ -13,6 +13,7 @@ use App\Http\Controllers\AcademicManagement\ProgramController;
 use App\Http\Controllers\AcademicManagement\SubjectController;
 use App\Http\Controllers\FacultyLoadController;
 use App\Http\Controllers\YearSectionController;
+use App\Http\Controllers\SectionOfferingController;
 
 /* ===============================================
    =========== Login Credentials Routes ==========
@@ -38,6 +39,7 @@ Route::delete('/students/{id}', [StudentController::class, 'destroy']);
 Route::delete('/students', [StudentController::class, 'bulkDestroy']);
 Route::get('/students/by-section', [StudentController::class, 'getStudentsBySection']);
 Route::get('/students/sections/all', [StudentController::class, 'getAllSections']);
+Route::post('/students/{id}/register-facial-recognition', [StudentController::class, 'registerFacialRecognition']);
 
 /* ================================================================
    =========== Protected routes - require authentication ==========
@@ -52,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/delete-multiple', [UserController::class, 'deleteMultiple']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
     Route::put('/users/{id}/change-password', [UserController::class, 'changePassword']);
+    Route::get('/users/departments/all', [UserController::class, 'getAllDepartments']);
 
     // Super Admin's Account Management - All User Types
     Route::get('/accounts', [AccountController::class, 'index']);
@@ -90,7 +93,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('programs/college/{collegeId}', [ProgramController::class, 'getByCollege']);
     Route::get('programs/program-heads/available', [ProgramController::class, 'getAvailableProgramHeads']);
     
+    // Program-Subject assignment routes
+    Route::post('programs/{programId}/subjects', [ProgramController::class, 'assignSubject']);
+    Route::delete('programs/{programId}/subjects/{subjectId}', [ProgramController::class, 'unassignSubject']);
+    Route::get('programs/{programId}/subjects', [ProgramController::class, 'getSubjects']);
+    
     // Subject routes - WALANG MIDDLEWARE SA CONTROLLER
     Route::apiResource('subjects', SubjectController::class);
     Route::get('subjects/type/{type}', [SubjectController::class, 'getByType']);
+    
+    // Section Offering routes
+    Route::apiResource('section-offerings', SectionOfferingController::class);
 });

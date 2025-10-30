@@ -18,7 +18,7 @@ class UserController extends Controller
             ], 403);
         }
 
-        $filters = $request->only(['search', 'role']);
+        $filters = $request->only(['search', 'department']);
         $perPage = $request->input('per_page', 10);
 
         $query = User::query();
@@ -37,9 +37,9 @@ class UserController extends Controller
             });
         }
 
-        // 🧩 Role filter (for professors, this is always 'prof')
-        if (!empty($filters['role'])) {
-            $query->where('role', $filters['role']);
+        // 🧩 Department filter
+        if (!empty($filters['department'])) {
+            $query->where('department', $filters['department']);
         }
 
         // 🕓 Paginate + sort by latest
@@ -299,6 +299,20 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Password updated successfully.'
         ]);
+    }
+
+    // Get all unique departments
+    public function getAllDepartments(Request $request)
+    {
+        $departments = User::where('role', 'prof')
+            ->distinct()
+            ->whereNotNull('department')
+            ->where('department', '!=', '')
+            ->pluck('department')
+            ->sort()
+            ->values();
+
+        return response()->json($departments);
     }
     
 }

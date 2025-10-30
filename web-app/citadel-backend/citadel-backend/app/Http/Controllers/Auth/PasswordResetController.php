@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use App\Models\User;
+use App\Models\Account;
+use App\Models\Student;
 use Illuminate\Support\Facades\Hash;
 
 class PasswordResetController extends Controller
@@ -18,7 +20,18 @@ class PasswordResetController extends Controller
         $request->validate(['email' => 'required|email']);
         
         try {
-            $user = User::where('email', $request->email)->first();
+            // Check Account model first (super admin, dean, program head, etc.)
+            $user = Account::where('email', $request->email)->first();
+            
+            // If not found, check User model (professors)
+            if (!$user) {
+                $user = User::where('email', $request->email)->first();
+            }
+            
+            // If still not found, check Student model
+            if (!$user) {
+                $user = Student::where('email', $request->email)->first();
+            }
 
             if (!$user) {
                 return response()->json(['message' => 'Email not found'], 404);
@@ -113,7 +126,13 @@ class PasswordResetController extends Controller
                 return response()->json(['error' => 'Token expired'], 400);
             }
 
-            $user = User::where('email', $request->email)->first();
+            // Check Account model first (super admin, dean, program head, etc.)
+            $user = Account::where('email', $request->email)->first();
+            
+            // If not found, check User model (professors)
+            if (!$user) {
+                $user = User::where('email', $request->email)->first();
+            }
             
             if (!$user) {
                 return response()->json(['error' => 'User not found'], 404);

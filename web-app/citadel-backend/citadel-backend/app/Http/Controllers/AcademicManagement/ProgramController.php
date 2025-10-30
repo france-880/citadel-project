@@ -16,7 +16,7 @@ class ProgramController extends Controller
      */
     public function index()
     {
-        $programs = Program::with(['college', 'programHead'])->get();
+        $programs = Program::with(['college', 'programHead', 'subjects'])->get();
         return response()->json([
             'success' => true,
             'data' => $programs
@@ -144,6 +144,99 @@ class ProgramController extends Controller
         return response()->json([
             'success' => true,
             'data' => $programHeads
+        ]);
+    }
+
+    /**
+     * Assign a subject to a program
+     */
+    public function assignSubject(Request $request, $programId)
+    {
+        $program = Program::find($programId);
+
+        if (!$program) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Program not found'
+            ], 404);
+        }
+
+        $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'semester' => 'nullable|string',
+            'year_level' => 'nullable|integer|min:1|max:10'
+        ]);
+
+        // Check if subject is already assigned
+        if ($program->subjects()->where('subject_id', $request->subject_id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject is already assigned to this program'
+            ], 400);
+        }
+
+        // Assign the subject with additional data
+        $program->subjects()->attach($request->subject_id, [
+            'semester' => $request->semester,
+            'year_level' => $request->year_level
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject assigned successfully',
+            'data' => $program->load(['college', 'programHead', 'subjects'])
+        ]);
+    }
+
+    /**
+     * Unassign a subject from a program
+     */
+    public function unassignSubject($programId, $subjectId)
+    {
+        $program = Program::find($programId);
+
+        if (!$program) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Program not found'
+            ], 404);
+        }
+
+        // Check if subject is assigned
+        if (!$program->subjects()->where('subject_id', $subjectId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject is not assigned to this program'
+            ], 400);
+        }
+
+        // Unassign the subject
+        $program->subjects()->detach($subjectId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject unassigned successfully',
+            'data' => $program->load(['college', 'programHead', 'subjects'])
+        ]);
+    }
+
+    /**
+     * Get all subjects assigned to a program
+     */
+    public function getSubjects($programId)
+    {
+        $program = Program::with('subjects')->find($programId);
+
+        if (!$program) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Program not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $program->subjects
         ]);
     }
 }

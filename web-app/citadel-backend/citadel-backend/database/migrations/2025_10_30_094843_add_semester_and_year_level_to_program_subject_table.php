@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subjects', function (Blueprint $table) {
-            $table->id();
-            $table->string('subject_name');
-            $table->string('subject_code')->unique();
-            $table->integer('units')->nullable();
-            $table->timestamps();
+        Schema::table('program_subject', function (Blueprint $table) {
+            $table->string('semester')->nullable()->after('subject_id');
+            $table->integer('year_level')->nullable()->after('semester');
         });
     }
 
@@ -25,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subjects');
+        Schema::table('program_subject', function (Blueprint $table) {
+            $table->dropColumn(['semester', 'year_level']);
+        });
     }
 };
