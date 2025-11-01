@@ -48,6 +48,7 @@ class AccountController extends Controller
                 'super_admin' => 'Super Admin',
                 'dean' => 'Dean',
                 'college_secretary' => 'College Secretary',
+                'registrar' => 'Registrar',
             ];
 
             return [
@@ -101,7 +102,8 @@ class AccountController extends Controller
         $roleMapping = [
             'Super Admin' => 'super_admin',
             'Dean' => 'dean',  
-            'College Secretary' => 'college_secretary'
+            'College Secretary' => 'college_secretary',
+            'Registrar' => 'registrar'
         ];
 
         // Map camelCase → snake_case
@@ -215,7 +217,8 @@ class AccountController extends Controller
             'Dean' => 'dean',
             'Secretary' => 'secretary',
             'Program Head' => 'program_head',
-            'Professor' => 'prof'
+            'Professor' => 'prof',
+            'Registrar' => 'registrar'
         ];
 
         // Map camelCase → snake_case
