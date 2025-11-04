@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\AcademicManagement\Program;
 use App\Models\AcademicManagement\Subject;
+use App\Models\FacultyLoad;
 
 class SectionOffering extends Model
 {
@@ -44,5 +45,13 @@ class SectionOffering extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(SectionOfferingSchedule::class);
+    }
+
+    /**
+     * Get the faculty loads for the section offering.
+     */
+    public function facultyLoads(): HasMany
+    {
+        return $this->hasMany(FacultyLoad::class, 'section_offering_id');
     }
 }

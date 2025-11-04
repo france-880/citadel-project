@@ -25,7 +25,18 @@ class AuthController extends Controller
         // Try to find the user in all 3 tables
         $user = $this->findUserByIdentifier($req->email);
 
-        if (!$user || !Hash::check($req->password, $user->password)) {
+        if (!$user) {
+            \Log::info('Login failed: User not found', ['identifier' => $req->email]);
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        if (!Hash::check($req->password, $user->password)) {
+            \Log::info('Login failed: Password mismatch', [
+                'identifier' => $req->email,
+                'user_id' => $user->id,
+                'user_email' => $user->email ?? 'N/A',
+                'user_username' => $user->username ?? 'N/A'
+            ]);
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
@@ -60,27 +71,30 @@ class AuthController extends Controller
     private function findUserByIdentifier($identifier)
     {
         // 1. Accounts table (super admin, dean, secretary)
-        $user = Account::where('email', $identifier)
-            ->orWhere('username', $identifier)
-            ->first();
+        $user = Account::where(function($query) use ($identifier) {
+            $query->where('email', $identifier)
+                  ->orWhere('username', $identifier);
+        })->first();
         if ($user) {
             $user->origin = 'accounts';
             return $user;
         }
 
         // 2. Users table (professors)
-        $user = User::where('email', $identifier)
-            ->orWhere('username', $identifier)
-            ->first();
+        $user = User::where(function($query) use ($identifier) {
+            $query->where('email', $identifier)
+                  ->orWhere('username', $identifier);
+        })->first();
         if ($user) {
             $user->origin = 'users';
             return $user;
         }
 
         // 3. Students table
-        $user = Student::where('email', $identifier)
-            ->orWhere('username', $identifier)
-            ->first();
+        $user = Student::where(function($query) use ($identifier) {
+            $query->where('email', $identifier)
+                  ->orWhere('username', $identifier);
+        })->first();
 
         if ($user) {
             $user->origin = 'students';

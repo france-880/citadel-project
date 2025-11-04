@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
         // Seed Users (Professors) and Accounts (All User Types)
         $this->call([
             SuperAdminSeeder::class,
-            AccountSeeder::class,
+            YearSectionSeeder::class,
+            // AccountSeeder::class, // Commented out - file doesn't exist
         ]);
     }
 }

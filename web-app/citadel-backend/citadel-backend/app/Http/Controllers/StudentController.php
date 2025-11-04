@@ -93,6 +93,7 @@ class StudentController extends Controller
             'address' => 'required|string',
             'guardian_name' => 'required|string|max:255', // snake_case
             'guardian_contact' => 'required|string|max:15', // snake_case
+            'guardian_email' => 'nullable|email', // guardian email
             'guardian_address' => 'required|string', // snake_case
             'username' => 'required|string|unique:students,username',
             'password' => 'required|string|min:8',
@@ -112,6 +113,7 @@ class StudentController extends Controller
             'address' => $validated['address'],
             'guardian_name' => $validated['guardian_name'],
             'guardian_contact' => $validated['guardian_contact'],
+            'guardian_email' => $validated['guardian_email'] ?? null,
             'guardian_address' => $validated['guardian_address'],
             'username' => $validated['username'],
             'password' => Hash::make($validated['password']),
@@ -165,6 +167,7 @@ class StudentController extends Controller
             'address' => $student->address,
             'guardianName' => $student->guardian_name,
             'guardianContact' => $student->guardian_contact, // ✅ FIXED: was 'guardian_cntact'
+            'guardian_email' => $student->guardian_email,
             'guardianAddress' => $student->guardian_address,
             'username' => $student->username,
             'created_at' => $student->created_at,
@@ -194,6 +197,8 @@ class StudentController extends Controller
             'guardian_name' => 'sometimes|string|max:255',
             'guardianContact' => 'required|string|max:15',
             'guardian_contact' => 'sometimes|string|max:15',
+            'guardian_email' => 'nullable|email',
+            'guardianEmail' => 'sometimes|email',
             'guardianAddress' => 'required|string',
             'guardian_address' => 'sometimes|string',
             'username' => 'required|string|unique:students,username,' . $id,
@@ -214,6 +219,8 @@ class StudentController extends Controller
             'address' => $validated['address'],
             'guardian_name' => $validated['guardianName'] ?? $validated['guardian_name'] ?? $student->guardian_name,
             'guardian_contact' => $validated['guardianContact'] ?? $validated['guardian_contact'] ?? $student->guardian_contact,
+            'guardian_email' => $validated['guardian_email'] ?? $validated['guardianEmail'] ?? $student->guardian_email,
+           
             'guardian_address' => $validated['guardianAddress'] ?? $validated['guardian_address'] ?? $student->guardian_address,
             'username' => $validated['username'],
         ];
@@ -297,39 +304,127 @@ class StudentController extends Controller
         }
     }
 
-    // Get students by section
+    // Get students by section (legacy method - kept for backward compatibility)
     public function getStudentsBySection(Request $request)
     {
         $section = $request->get('section');
         $program = $request->get('program');
         $year = $request->get('year');
 
-        $query = Student::query();
+        $query = Student::with(['program', 'yearSection']);
 
         if ($section) {
-            $query->where('section', $section);
+            $query->whereHas('yearSection', function($q) use ($section) {
+                $q->where('section', $section);
+            });
         }
 
         if ($program) {
-            $query->where('program', $program);
+            // Support both program_id and program_name
+            if (is_numeric($program)) {
+                $query->where('program_id', $program);
+            } else {
+                $query->whereHas('program', function($q) use ($program) {
+                    $q->where('program_name', $program);
+                });
+            }
         }
 
         if ($year) {
-            $query->where('year', $year);
+            $query->whereHas('yearSection', function($q) use ($year) {
+                $q->where('year_level', $year);
+            });
         }
 
         $students = $query->orderBy('fullname')->get();
 
-        $students->transform(fn($s) => [
-            'id' => $s->id,
-            'fullname' => $s->fullname,
-            'studentNo' => $s->student_no,
-            'section' => $s->section,
-            'program' => $s->program,
-            'year' => $s->year,
-            'email' => $s->email,
-            'contact' => $s->contact,
-        ]);
+        $students->transform(function($s) {
+            return [
+                'id' => $s->id,
+                'fullname' => $s->fullname,
+                'studentNo' => $s->student_no,
+                'section' => $s->yearSection->section ?? 'N/A',
+                'program' => $s->program->program_name ?? 'N/A',
+                'year' => $s->yearSection->year_level ?? 'N/A',
+                'email' => $s->email,
+                'contact' => $s->contact,
+            ];
+        });
+
+        return response()->json($students);
+    }
+
+    // Get students by program_id, year_level, and section (for faculty loads)
+    public function getStudentsByFacultyLoad(Request $request)
+    {
+        $programId = $request->get('program_id');
+        $yearLevel = $request->get('year_level');
+        $section = $request->get('section');
+        $academicYear = $request->get('academic_year');
+        $semester = $request->get('semester');
+
+        $query = Student::with(['program', 'yearSection']);
+
+        // Filter by program_id
+        if ($programId) {
+            $query->where('program_id', $programId);
+        }
+
+        // Filter by year_level and section through yearSection relationship
+        if ($yearLevel || $section) {
+            $query->whereHas('yearSection', function($q) use ($yearLevel, $section) {
+                if ($yearLevel) {
+                    // Handle both numeric and text year levels (e.g., "4" or "Fourth Year")
+                    // Convert text to number for comparison
+                    $yearLevelNum = $yearLevel;
+                    if (!is_numeric($yearLevel)) {
+                        $yearMap = [
+                            'first year' => '1', 'first' => '1', '1st year' => '1', '1st' => '1',
+                            'second year' => '2', 'second' => '2', '2nd year' => '2', '2nd' => '2',
+                            'third year' => '3', 'third' => '3', '3rd year' => '3', '3rd' => '3',
+                            'fourth year' => '4', 'fourth' => '4', '4th year' => '4', '4th' => '4',
+                            'fifth year' => '5', 'fifth' => '5', '5th year' => '5', '5th' => '5'
+                        ];
+                        $yearLower = strtolower(trim($yearLevel));
+                        $yearLevelNum = $yearMap[$yearLower] ?? $yearLevel;
+                    }
+                    
+                    // Match both numeric and text formats
+                    $q->where(function($subQ) use ($yearLevelNum, $yearLevel) {
+                        $subQ->where('year_level', $yearLevelNum)
+                             ->orWhere('year_level', $yearLevel)
+                             ->orWhere('year_level', 'like', '%' . $yearLevelNum . '%');
+                    });
+                }
+                if ($section) {
+                    // Remove suffixes like "West", "North", etc. for matching
+                    $cleanSection = preg_replace('/\s*-\s*(West|North|East|South)$/i', '', $section);
+                    // Match exact or section with suffix
+                    $q->where(function($subQ) use ($section, $cleanSection) {
+                        $subQ->where('section', $section)
+                             ->orWhere('section', $cleanSection)
+                             ->orWhere('section', 'like', $cleanSection . '%');
+                    });
+                }
+            });
+        }
+
+        $students = $query->orderBy('fullname')->get();
+
+        $students->transform(function($s) {
+            return [
+                'id' => $s->id,
+                'fullname' => $s->fullname,
+                'studentNo' => $s->student_no,
+                'section' => $s->yearSection->section ?? 'N/A',
+                'program' => $s->program->program_name ?? 'N/A',
+                'program_id' => $s->program_id,
+                'year' => $s->yearSection->year_level ?? 'N/A',
+                'year_section_id' => $s->year_section_id,
+                'email' => $s->email,
+                'contact' => $s->contact,
+            ];
+        });
 
         return response()->json($students);
     }

@@ -13,7 +13,13 @@ class SuperAdminSeeder extends Seeder
      */
     public function run(): void
     {
+        // Delete existing superadmin if exists
+        Account::where('email', 'superadmin@citadel.edu')
+            ->orWhere('username', 'superadmin')
+            ->delete();
+
         // Create default super admin account
+        $password = 'admin123'; // Simple password for testing
         Account::create([
             'fullname' => 'Super Administrator',
             'college_id' => null,
@@ -24,12 +30,12 @@ class SuperAdminSeeder extends Seeder
             'contact' => '09123456789',
             'email' => 'superadmin@citadel.edu',
             'username' => 'superadmin',
-            'password' => Hash::make('superadmin@citadel.edu'),
+            'password' => Hash::make($password),
         ]);
 
         $this->command->info('Super Admin account created successfully!');
         $this->command->info('Email: superadmin@citadel.edu');
         $this->command->info('Username: superadmin');
-        $this->command->info('Password: superadmin@citadel.edu');
+        $this->command->info('Password: admin123');
     }
 }

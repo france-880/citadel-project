@@ -47,6 +47,19 @@ class SectionOfferingController extends Controller
             $query->where('subject_id', $request->subject_id);
         }
 
+        // Exclude already assigned section offerings if requested (for faculty loading)
+        if ($request->has('exclude_assigned') && $request->exclude_assigned == 'true') {
+            $query->whereDoesntHave('facultyLoads', function($q) use ($request) {
+                // Optionally filter by academic_year and semester if provided
+                if ($request->has('academic_year')) {
+                    $q->where('academic_year', $request->academic_year);
+                }
+                if ($request->has('semester')) {
+                    $q->where('semester', $request->semester);
+                }
+            });
+        }
+
         $sectionOfferings = $query->get();
 
         return response()->json([
@@ -155,6 +168,7 @@ class SectionOfferingController extends Controller
             'schedules.*.day' => 'required|string',
             'schedules.*.start_time' => 'required|date_format:H:i',
             'schedules.*.end_time' => 'required|date_format:H:i',
+            'schedules.*.room' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
