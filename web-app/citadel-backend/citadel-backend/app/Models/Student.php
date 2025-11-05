@@ -23,10 +23,10 @@ class Student extends Authenticatable
         'address',
         'guardian_name',
         'guardian_contact',
+        'guardian_email',
         'guardian_address',
         'username',
         'password',
-
         'program_id',
         'year_section_id',
         'has_facial_recognition',

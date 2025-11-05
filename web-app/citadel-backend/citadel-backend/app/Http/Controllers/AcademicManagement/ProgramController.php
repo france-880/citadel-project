@@ -162,9 +162,7 @@ class ProgramController extends Controller
         }
 
         $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'semester' => 'nullable|string',
-            'year_level' => 'nullable|integer|min:1|max:10'
+            'subject_id' => 'required|exists:subjects,id'
         ]);
 
         // Check if subject is already assigned
@@ -175,11 +173,8 @@ class ProgramController extends Controller
             ], 400);
         }
 
-        // Assign the subject with additional data
-        $program->subjects()->attach($request->subject_id, [
-            'semester' => $request->semester,
-            'year_level' => $request->year_level
-        ]);
+        // Assign the subject
+        $program->subjects()->attach($request->subject_id);
 
         return response()->json([
             'success' => true,

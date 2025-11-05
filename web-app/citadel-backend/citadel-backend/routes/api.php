@@ -14,6 +14,8 @@ use App\Http\Controllers\AcademicManagement\SubjectController;
 use App\Http\Controllers\FacultyLoadController;
 use App\Http\Controllers\YearSectionController;
 use App\Http\Controllers\SectionOfferingController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReportController;
 
 /* ===============================================
    =========== Login Credentials Routes ==========
@@ -32,13 +34,14 @@ Route::get('/year-sections', [YearSectionController::class, 'index']);
 // ✅ student routes
 Route::get('/students', [StudentController::class, 'index']);
 Route::post('/students', [StudentController::class, 'store']);
+Route::get('/students/by-section', [StudentController::class, 'getStudentsBySection']);
+Route::get('/students/by-faculty-load', [StudentController::class, 'getStudentsByFacultyLoad']);
+Route::get('/students/sections/all', [StudentController::class, 'getAllSections']);
 Route::get('/students/{id}', [StudentController::class, 'show']);
 Route::put('/students/{id}', [StudentController::class, 'update']);
 Route::delete('/students/delete-multiple', [StudentController::class, 'deleteMultiple']);
 Route::delete('/students/{id}', [StudentController::class, 'destroy']);
 Route::delete('/students', [StudentController::class, 'bulkDestroy']);
-Route::get('/students/by-section', [StudentController::class, 'getStudentsBySection']);
-Route::get('/students/sections/all', [StudentController::class, 'getAllSections']);
 Route::post('/students/{id}/register-facial-recognition', [StudentController::class, 'registerFacialRecognition']);
 
 /* ================================================================
@@ -104,4 +107,11 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Section Offering routes
     Route::apiResource('section-offerings', SectionOfferingController::class);
+    
+    // Dashboard routes
+    Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics']);
+    Route::get('/dashboard/programs', [DashboardController::class, 'getProgramStatistics']);
+    
+    // Report routes
+    Route::get('/reports/students', [ReportController::class, 'getStudentReports']);
 });

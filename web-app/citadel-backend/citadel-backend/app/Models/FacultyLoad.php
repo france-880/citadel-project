@@ -10,6 +10,7 @@ class FacultyLoad extends Model
 {
     protected $fillable = [
         'faculty_id',
+        'section_offering_id',
         'subject_id',
         'subject_code',
         'subject_description',
@@ -39,5 +40,10 @@ class FacultyLoad extends Model
     public function subject()
     {
         return $this->belongsTo(Subject::class, 'subject_id');
+    }
+
+    public function sectionOffering()
+    {
+        return $this->belongsTo(SectionOffering::class, 'section_offering_id');
     }
 }
