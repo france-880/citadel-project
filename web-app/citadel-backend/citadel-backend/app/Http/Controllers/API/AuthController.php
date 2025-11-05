@@ -24,22 +24,45 @@ class AuthController extends Controller
 
         // Try to find the user in all 3 tables
         $user = $this->findUserByIdentifier($req->email);
+        $usernameExists = $user !== null;
 
-        if (!$user) {
-            \Log::info('Login failed: User not found', ['identifier' => $req->email]);
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        // Determine password correctness
+        $passwordCorrect = false;
+        if ($user) {
+            $passwordCorrect = Hash::check($req->password, $user->password);
+        } else {
+            // User doesn't exist, check if password matches any user (for determining error message)
+            // This is done to differentiate between "wrong username" and "both wrong"
+            $passwordMatchesAnyUser = $this->checkPasswordAgainstAllUsers($req->password);
         }
 
-        if (!Hash::check($req->password, $user->password)) {
-            \Log::info('Login failed: Password mismatch', [
-                'identifier' => $req->email,
-                'user_id' => $user->id,
-                'user_email' => $user->email ?? 'N/A',
-                'user_username' => $user->username ?? 'N/A'
-            ]);
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        // Determine error message based on validation results
+        if (!$usernameExists) {
+            // Username doesn't exist
+            if (isset($passwordMatchesAnyUser) && $passwordMatchesAnyUser) {
+                // Password matches some user, but username is wrong
+                \Log::info('Login failed: Invalid username (password correct)', ['identifier' => $req->email]);
+                return response()->json(['message' => 'Invalid username.', 'error_type' => 'username'], 401);
+            } else {
+                // Both username and password are wrong
+                \Log::info('Login failed: Invalid username and password', ['identifier' => $req->email]);
+                return response()->json(['message' => 'Invalid username and password.', 'error_type' => 'both'], 401);
+            }
+        } else {
+            // Username exists
+            if (!$passwordCorrect) {
+                // Username exists but password is wrong
+                \Log::info('Login failed: Password mismatch', [
+                    'identifier' => $req->email,
+                    'user_id' => $user->id,
+                    'user_email' => $user->email ?? 'N/A',
+                    'user_username' => $user->username ?? 'N/A'
+                ]);
+                return response()->json(['message' => 'Incorrect password.', 'error_type' => 'password'], 401);
+            }
         }
 
+        // Both username and password are correct - proceed with login
         // Create a token for the authenticated user
         $token = $user->createToken('api-token')->plainTextToken;
 
@@ -104,6 +127,43 @@ class AuthController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * 🔍 Helper: Check if password matches any user in the system
+     * Used to differentiate between "wrong username" vs "both wrong"
+     * Note: This checks a sample of users for performance (limit to first 100 per table)
+     */
+    private function checkPasswordAgainstAllUsers($password)
+    {
+        // Check a limited sample from each table for performance
+        // This is a trade-off between accurate error messages and performance
+        
+        // Check Accounts table (limit to 100)
+        $accounts = Account::limit(100)->get();
+        foreach ($accounts as $account) {
+            if (Hash::check($password, $account->password)) {
+                return true;
+            }
+        }
+
+        // Check Users table (limit to 100)
+        $users = User::limit(100)->get();
+        foreach ($users as $user) {
+            if (Hash::check($password, $user->password)) {
+                return true;
+            }
+        }
+
+        // Check Students table (limit to 100)
+        $students = Student::limit(100)->get();
+        foreach ($students as $student) {
+            if (Hash::check($password, $student->password)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

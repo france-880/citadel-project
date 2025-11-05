@@ -157,6 +157,7 @@ class StudentController extends Controller
             'student_no' => $student->student_no,
             'program_id' => $student->program_id,
             'year_section_id' => $student->year_section_id,
+            'status' => $student->status ?? '',
             'section' => $student->yearSection->section ?? '',
             'program' => $student->program->program_name ?? '',
             'year' => $student->yearSection->year_level ?? '',
@@ -166,9 +167,12 @@ class StudentController extends Controller
             'contact' => $student->contact,
             'address' => $student->address,
             'guardianName' => $student->guardian_name,
-            'guardianContact' => $student->guardian_contact, // ✅ FIXED: was 'guardian_cntact'
+            'guardian_name' => $student->guardian_name,
+            'guardianContact' => $student->guardian_contact,
+            'guardian_contact' => $student->guardian_contact,
             'guardian_email' => $student->guardian_email,
             'guardianAddress' => $student->guardian_address,
+            'guardian_address' => $student->guardian_address,
             'username' => $student->username,
             'created_at' => $student->created_at,
         ];
