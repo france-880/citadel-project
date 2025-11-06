@@ -7,6 +7,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\StudentControllerAPI;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AcademicManagement\CollegeController;
 use App\Http\Controllers\AcademicManagement\ProgramController;
@@ -114,4 +115,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Report routes
     Route::get('/reports/students', [ReportController::class, 'getStudentReports']);
+
+    // Fetch students with entry logs
+    Route::get('/students-with-logs', [StudentControllerAPI::class, 'getWithLogs']);
 });

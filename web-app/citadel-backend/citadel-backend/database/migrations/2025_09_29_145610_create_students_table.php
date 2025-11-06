@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('guardian_contact');
             $table->string('guardian_email')->nullable();
             $table->string('guardian_address');
-            $table->string('guardian_email')->nullable();
             $table->string('username')->unique();
             $table->string('password');
             $table->timestamps();
