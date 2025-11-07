@@ -96,8 +96,7 @@ class FacultyLoadController extends Controller
                     $day = strtoupper($schedule->day);
                     $startTime = date('g:i A', strtotime($schedule->start_time));
                     $endTime = date('g:i A', strtotime($schedule->end_time));
-                    $room = $schedule->room ? " ({$schedule->room})" : '';
-                    return "{$day} {$startTime}-{$endTime}{$room}";
+                    return "{$day} {$startTime}-{$endTime}";
                 });
                 // Always use schedules from section offering (source of truth)
                 $validated['schedule'] = $scheduleParts->join(', ');
@@ -193,8 +192,7 @@ class FacultyLoadController extends Controller
                         $day = strtoupper($schedule->day);
                         $startTime = date('g:i A', strtotime($schedule->start_time));
                         $endTime = date('g:i A', strtotime($schedule->end_time));
-                        $room = $schedule->room ? " ({$schedule->room})" : '';
-                        return "{$day} {$startTime}-{$endTime}{$room}";
+                        return "{$day} {$startTime}-{$endTime}";
                     });
                     // Always use schedules from section offering (source of truth)
                     $validated['schedule'] = $scheduleParts->join(', ');
@@ -356,8 +354,7 @@ class FacultyLoadController extends Controller
                     $day = strtoupper($schedule->day);
                     $startTime = date('g:i A', strtotime($schedule->start_time));
                     $endTime = date('g:i A', strtotime($schedule->end_time));
-                    $room = $schedule->room ? " ({$schedule->room})" : '';
-                    return "{$day} {$startTime}-{$endTime}{$room}";
+                    return "{$day} {$startTime}-{$endTime}";
                 });
                 $facultyLoad->computed_schedule = $scheduleParts->join(', ');
             } else {
@@ -365,17 +362,8 @@ class FacultyLoadController extends Controller
                 $facultyLoad->computed_schedule = $facultyLoad->schedule ?? '';
             }
             
-            // Also extract room from schedules if available
-            if (empty($facultyLoad->room) && $sectionOffering->schedules->isNotEmpty()) {
-                $rooms = $sectionOffering->schedules->pluck('room')->filter()->unique()->values();
-                if ($rooms->isNotEmpty()) {
-                    $facultyLoad->computed_room = $rooms->join(', ');
-                } else {
-                    $facultyLoad->computed_room = $facultyLoad->room ?? 'TBA';
-                }
-            } else {
-                $facultyLoad->computed_room = $facultyLoad->room ?? 'TBA';
-            }
+            // Use room from faculty_loads table (not from schedules)
+            $facultyLoad->computed_room = $facultyLoad->room ?? 'TBA';
             
             // Format section title as "BSIT 1A" (Program + Year Level + Section)
             // Make sure program is loaded

@@ -168,7 +168,6 @@ class SectionOfferingController extends Controller
             'schedules.*.day' => 'required|string',
             'schedules.*.start_time' => 'required|date_format:H:i',
             'schedules.*.end_time' => 'required|date_format:H:i',
-            'schedules.*.room' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {

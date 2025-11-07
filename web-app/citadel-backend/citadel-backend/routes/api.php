@@ -99,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Program-Subject assignment routes
     Route::post('programs/{programId}/subjects', [ProgramController::class, 'assignSubject']);
+    Route::put('programs/{programId}/subjects/{subjectId}', [ProgramController::class, 'updateSubjectAssignment']);
     Route::delete('programs/{programId}/subjects/{subjectId}', [ProgramController::class, 'unassignSubject']);
     Route::get('programs/{programId}/subjects', [ProgramController::class, 'getSubjects']);
     
@@ -112,6 +113,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Dashboard routes
     Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics']);
     Route::get('/dashboard/programs', [DashboardController::class, 'getProgramStatistics']);
+    Route::get('/dashboard/dean', [DashboardController::class, 'getDeanStatistics']);
     
     // Report routes
     Route::get('/reports/students', [ReportController::class, 'getStudentReports']);

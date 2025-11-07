@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\Account;
 use App\Models\AcademicManagement\Program;
+use App\Models\AcademicManagement\College;
 use App\Models\SectionOffering;
 use App\Models\FacultyLoad;
 use Carbon\Carbon;
@@ -211,6 +212,189 @@ class DashboardController extends Controller
                 'success' => false,
                 'message' => 'Failed to fetch program statistics: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Get dashboard statistics for Dean
+     */
+    public function getDeanStatistics(Request $request)
+    {
+        try {
+            // Get authenticated user (dean)
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.'
+                ], 401);
+            }
+
+            // Check if user is a dean (can be from Account model)
+            $isDean = false;
+            if ($user instanceof Account) {
+                $isDean = $user->role === 'dean';
+            } elseif ($user instanceof User) {
+                $isDean = $user->role === 'dean';
+            }
+            
+            if (!$isDean) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Dean access required.'
+                ], 403);
+            }
+
+            // Get the college where this dean is assigned
+            $college = College::where('dean_id', $user->id)->first();
+            
+            if (!$college) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No college assigned to this dean.'
+                ], 404);
+            }
+
+            // Get all programs under this college
+            $programIds = Program::where('college_id', $college->id)->pluck('id');
+
+            // Get all students under these programs
+            // If no programs, return empty result
+            if ($programIds->isEmpty()) {
+                $allStudents = collect([]);
+            } else {
+                $allStudents = Student::whereIn('program_id', $programIds)->get();
+            }
+            
+            // Total students registered
+            $totalStudents = $allStudents->count();
+            
+            // Regular students (students with year_section_id - assumed to be regular)
+            $regularStudents = $allStudents->whereNotNull('year_section_id')->count();
+            
+            // Irregular students (students without year_section_id)
+            $irregularStudents = $allStudents->whereNull('year_section_id')->count();
+
+            // Get today's date for attendance (placeholder - no attendance system yet)
+            $today = Carbon::today();
+            
+            // For now, we'll use placeholder attendance data
+            // When attendance system is implemented, query actual attendance records
+            $totalStudentsForAttendance = $totalStudents;
+            $presentStudents = (int) ($totalStudentsForAttendance * 0.95); // 95% placeholder
+            $absentStudents = $totalStudentsForAttendance - $presentStudents;
+            $lastUpdated = Carbon::now()->format('g:i A');
+
+            // Get recent activities for this college
+            $recentActivities = $this->getDeanRecentActivities($programIds);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'summary' => [
+                        'totalStudents' => $totalStudents,
+                        'regularStudents' => $regularStudents,
+                        'irregularStudents' => $irregularStudents,
+                    ],
+                    'attendanceOverview' => [
+                        'present' => $presentStudents,
+                        'absent' => $absentStudents,
+                        'total' => $totalStudentsForAttendance,
+                        'lastUpdated' => $lastUpdated,
+                    ],
+                    'recentActivities' => $recentActivities,
+                    'college' => [
+                        'id' => $college->id,
+                        'name' => $college->college_name,
+                        'code' => $college->college_code,
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch dean dashboard statistics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get recent activities for Dean's college
+     */
+    private function getDeanRecentActivities($programIds)
+    {
+        $activities = [];
+        
+        // Recent student registrations under dean's programs
+        if ($programIds->isNotEmpty()) {
+            $recentStudents = Student::whereIn('program_id', $programIds)
+                ->orderBy('created_at', 'desc')
+                ->limit(3)
+                ->get();
+        
+            foreach ($recentStudents as $student) {
+                $timeAgo = $this->getTimeAgo($student->created_at);
+                $activities[] = [
+                    'activity' => "New student registration approved: {$student->fullname}",
+                    'time' => $timeAgo,
+                    'created_at' => $student->created_at->toISOString(),
+                ];
+            }
+        }
+        
+        // Recent faculty loads (if available)
+        $recentFacultyLoads = FacultyLoad::orderBy('created_at', 'desc')
+            ->with('faculty')
+            ->limit(2)
+            ->get();
+        
+        foreach ($recentFacultyLoads as $load) {
+            if ($load->faculty) {
+                $timeAgo = $this->getTimeAgo($load->created_at);
+                $activities[] = [
+                    'activity' => "Faculty attendance reviewed: {$load->faculty->fullname}",
+                    'time' => $timeAgo,
+                    'created_at' => $load->created_at->toISOString(),
+                ];
+            }
+        }
+        
+        // Sort by created_at and return top 5
+        return collect($activities)
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values()
+            ->map(function($activity) {
+                return [
+                    'activity' => $activity['activity'],
+                    'time' => $activity['time']
+                ];
+            })
+            ->all();
+    }
+
+    /**
+     * Get human-readable time ago
+     */
+    private function getTimeAgo($datetime)
+    {
+        $diff = Carbon::parse($datetime)->diffInHours(Carbon::now());
+        
+        if ($diff < 1) {
+            $minutes = Carbon::parse($datetime)->diffInMinutes(Carbon::now());
+            if ($minutes < 1) {
+                return 'Just now';
+            }
+            return $minutes . ' minute' . ($minutes > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 24) {
+            return $diff . ' hour' . ($diff > 1 ? 's' : '') . ' ago';
+        } else {
+            $days = Carbon::parse($datetime)->diffInDays(Carbon::now());
+            if ($days == 1) {
+                return 'Yesterday';
+            }
+            return $days . ' days ago';
         }
     }
 }

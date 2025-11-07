@@ -43,6 +43,8 @@ class Program extends Model
      */
     public function subjects(): BelongsToMany
     {
-        return $this->belongsToMany(Subject::class, 'program_subject');
+        return $this->belongsToMany(Subject::class, 'program_subject')
+            ->withPivot('semester', 'year_level')
+            ->withTimestamps();
     }
 }

@@ -12,7 +12,6 @@ class SectionOfferingSchedule extends Model
         'day',
         'start_time',
         'end_time',
-        'room',
     ];
 
     /**
